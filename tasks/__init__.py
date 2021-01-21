@@ -1,0 +1,16 @@
+"""Package tasks."""
+
+from invoke import Collection
+
+from . import conda
+from .logging import configure_root_logger
+from .tasks import bump, docs, lint, serve
+
+configure_root_logger()
+
+ns = Collection()
+ns.add_task(bump)
+ns.add_task(docs)
+ns.add_task(serve)
+ns.add_task(lint)
+ns.add_collection(conda)

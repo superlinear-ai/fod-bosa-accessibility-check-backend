@@ -1,0 +1,16 @@
+# Do: pin all runtime dependencies in this spec with PEP 440 version specifiers
+name: accessibility-check-backend-run-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python~=3.8.6
+  - pip~=20.2
+  - pip:
+      - fastapi
+      - gunicorn
+      - imutils
+      - opencv-python
+      - python-multipart
+      - selenium
+      - uvicorn[standard]
