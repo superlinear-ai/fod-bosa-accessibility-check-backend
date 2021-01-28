@@ -66,7 +66,7 @@ def detect_wcag_1_4_3_infractions(
         )
 
         min_contrast = MIN_CONTRAST_RATIO if box.y2 - box.y1 < 20 else MIN_CONTRAST_RATIO_LARGE_TEXT
-        if contrast < min_contrast:
+        if contrast < min_contrast and contrast >= 1.2:
             box.contrast = contrast
             box.contrast_threshold = min_contrast
             low_boxes.append(box)
