@@ -2,6 +2,10 @@
 
 Extra checks for FOD BOSA's Accessibility Check tool.
 
+The frontend for this tool can be found [here](https://github.com/radix-ai/AccessibilityCheck).
+
+We have created a list of improvements [here](docs/future_improvements.md).
+
 Developed by [Radix](https://www.radix.ai).
 
 ## Deployment
