@@ -12,7 +12,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
 from .type_aliases import Image, Infraction
-from .utils import get_contrast_ratio, get_xpath_of_element
+from .utils_1_4 import get_contrast_ratio, get_xpath_of_element
 
 MIN_CONTRAST_RATIO = 4.5
 MIN_CONTRAST_RATIO_LARGE_TEXT = 3.0

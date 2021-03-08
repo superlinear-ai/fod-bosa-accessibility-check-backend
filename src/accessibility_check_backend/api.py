@@ -31,7 +31,7 @@ def redirect_to_docs() -> RedirectResponse:
     return RedirectResponse(url="/docs")
 
 
-@app.post("/v1/check_url", response_model=ReturnedInfractions)
+@app.post("/v1/check_url", response_model=ReturnedInfractions, response_model_exclude_unset=True)
 async def check_url(data: CheckURLData) -> ReturnedInfractions:
     """Check the given URL.
 

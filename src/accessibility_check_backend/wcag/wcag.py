@@ -1,15 +1,15 @@
 """General file to detect WCAG infractions."""
 
-import time
-from pathlib import Path
 from typing import List
 
-import cv2
-
 from .type_aliases import Infraction
-from .utils import take_screenshot
+from .utils import render_url
+from .utils_1_4 import take_screenshot
+from .utils_3_1 import get_html_language, parse_page
 from .wcag_1_4_3 import detect_wcag_1_4_3_infractions
 from .wcag_1_4_11 import detect_wcag_1_4_11_infractions
+from .wcag_3_1_1 import detect_wcag_3_1_1_infractions
+from .wcag_3_1_2 import detect_wcag_3_1_2_infractions
 
 
 def detect_wcag_infractions(url: str, window_width: int, window_height: int) -> List[Infraction]:
@@ -29,28 +29,28 @@ def detect_wcag_infractions(url: str, window_width: int, window_height: int) -> 
     List[Infraction]
         The detected infractions against WCAG
     """
-    # Create the temp folder if it doesn't yet exist
-    folder = Path("temp/")
-    folder.mkdir(exist_ok=True)
+    infractions = []
 
-    # Take a small and a large screenshot and keep the browser tabs (i.e. drivers) open
-    t = int(time.time() * 1000)
-    filename_small = folder / f"capture-{t}-small.png"
-    driver_small = take_screenshot(url, window_width, window_height, filename_small, scale=1)
-    img_small = cv2.imread(str(filename_small))
-    filename_large = folder / f"capture-{t}-large.png"
-    driver_large = take_screenshot(url, window_width, window_height, filename_large, scale=2)
-    img_large = cv2.imread(str(filename_large))
+    # Preparations
+    driver_small = render_url(url, window_width, window_height, scale=1)
+    img_small = take_screenshot(driver_small)
+    driver_large = render_url(url, window_width, window_height, scale=2)
+    img_large = take_screenshot(driver_large)
+    body_html = parse_page(driver_small)
+    html_language = get_html_language(driver_small)
 
-    # Detect infractions against WCAG
+    # Detect infractions against WCAG 1.4.3 and 1.4.11
     infractions = detect_wcag_1_4_3_infractions(driver_small, img_small, img_large)
     infractions += detect_wcag_1_4_11_infractions(driver_large, img_large)
 
+    # Detect infractions against WCAG 3.1.1 and 3.1.2
+    if html_language:
+        infractions += detect_wcag_3_1_1_infractions(body_html, html_language)
+        infractions += detect_wcag_3_1_2_infractions(body_html, html_language)
+
     # Clean up
-    filename_small.unlink()
-    filename_large.unlink()
-    driver_small.close()
-    driver_large.close()
+    driver_small.quit()
+    driver_large.quit()
 
     # Return the list of infractions
     return infractions
