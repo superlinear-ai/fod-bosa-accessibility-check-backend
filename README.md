@@ -23,7 +23,7 @@ It's very easy to deploy this API anywhere using [Docker](https://www.docker.com
 2. To run the image locally, you can simply run the following command:
 
     ```bash
-    docker run --detach --name ac-container --publish 80:8000 app-image
+    docker run --detach --name ac-container --publish 80:8000 accessibility-check-backend-app
     ```
 
     This command runs the `app-image` image in a detached mode and publishes it on port 80.
