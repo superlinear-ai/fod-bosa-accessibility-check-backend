@@ -10,7 +10,7 @@ dependencies:
       - fastapi
       - gunicorn
       - imutils
-      - langdetect
+      - langid
       - lxml
       - opencv-python
       - python-multipart

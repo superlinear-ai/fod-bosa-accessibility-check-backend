@@ -8,8 +8,8 @@ from lxml.html import HtmlElement
 from .type_aliases import Infraction
 from .utils_3_1 import count_words, predict_language
 
-MIN_WORDS_DEFAULT = 5
-MIN_WORDS_HIDDEN = 3
+MIN_WORDS_DEFAULT = 4
+MIN_WORDS_HIDDEN = 2
 HIDDEN_ATTRIBUTES = {"aria-label", "alt", "value", "title"}
 
 
@@ -61,7 +61,7 @@ def _dfs(
           - the infractions found
     """
     # If the current element does not have a `lang` attribute, take the parent's language
-    defined_language = element.get("lang", parent_language)
+    defined_language = element.get("lang", parent_language).lower()[:2]
 
     # The text contained in this element (and in this element alone)
     text = (element.text or "").replace("\n", " ").strip()
@@ -80,7 +80,7 @@ def _dfs(
         # Differ between children that are similar and children that are different
         if len({(defined, detected) for defined, detected, _, _ in children_results}) == 1:
             # All children have the same language defined and detected
-            child_defined_language, child_detected_language, _, _ = children_results[0]
+            child_defined_language, child_detected_language, child_text, _ = children_results[0]
             if child_detected_language and child_defined_language != child_detected_language:
                 # All children are wrong
                 # Give a warning for the current element instead of for each of its children
@@ -90,12 +90,13 @@ def _dfs(
                         "xpath": tree.getpath(element),
                         "html_language": child_defined_language,
                         "predicted_language": child_detected_language,
+                        "text": child_text,
                     }
                 )
         else:
             # The children have different values for their defined and detected languages
             for child, child_result in zip(children, children_results):
-                child_defined_language, child_detected_language, _, _ = child_result
+                child_defined_language, child_detected_language, child_text, _ = child_result
                 if child_detected_language and child_detected_language != child_defined_language:
                     # This child is wrong, give a warning for only this child
                     infractions.append(
@@ -104,15 +105,25 @@ def _dfs(
                             "xpath": tree.getpath(child),
                             "html_language": child_defined_language,
                             "predicted_language": child_detected_language,
+                            "text": child_text,
                         }
                     )
 
         # If any of the children of the current element contains a very short piece of text, add it
         # to the current element's text
         for _, _, child_text, _ in children_results:
+            if child_text is None:
+                continue
+            child_text = child_text.strip()
+
             # We only add the child text if it is short
-            if child_text is not None and count_words(child_text) < MIN_WORDS_DEFAULT:
-                text += " " + child_text
+            if count_words(child_text) >= MIN_WORDS_DEFAULT:
+                continue
+            current_text = (text or "").strip()
+
+            # We only add the child text if the current text doesn't end with the child text
+            if not current_text.endswith(child_text):
+                text = current_text + " " + child_text
 
     # If the current element's text is long enough, predict its language
     if count_words(text) >= MIN_WORDS_DEFAULT:
@@ -156,5 +167,6 @@ def _check_hidden_attributes(
                     "xpath": tree.getpath(element),
                     "html_language": defined_language,
                     "predicted_language": detected_language,
+                    "text": attribute_value,
                 }
     return None

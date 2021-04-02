@@ -1,16 +1,19 @@
 """Handy functions used by WCAG 3.1.1 and 3.1.2."""
 
 import re
+from functools import lru_cache
 from typing import Optional
 
-import langdetect
 import lxml.html
 import lxml.html.clean
-from langdetect import DetectorFactory
-from langdetect.lang_detect_exception import LangDetectException
+from langid.langid import LanguageIdentifier, model
 from selenium.webdriver.chrome.webdriver import WebDriver
 
-DetectorFactory.seed = 0
+URL_REGEX = re.compile(r"(https?://|www)[-_.?&~;+=/#0-9A-Za-z]{1,2076}")
+EMAIL_REGEX = re.compile(r"[-_.0-9A-Za-z]{1,64}@[-_0-9A-Za-z]{1,255}[-_.0-9A-Za-z]{1,255}")
+WORD_REGEX = re.compile(r"\b[^\d\W]+\b")
+LANGUAGES = ["nl", "fr", "de", "en"]
+MIN_LANGUAGE_PROBABILITY = 0.8
 
 
 def get_html_language(driver: WebDriver) -> Optional[str]:
@@ -75,6 +78,27 @@ def parse_page(driver: WebDriver) -> lxml.html.HtmlElement:
     return body_html
 
 
+def clean_text(text: str) -> str:
+    """Clean the given text.
+
+    Removes URLs, email addresses and only keeps words.
+
+    Parameters
+    ----------
+    text : str
+        The text to clean
+
+    Returns
+    -------
+    str
+        The cleaned text
+    """
+    text = URL_REGEX.sub("", text)  # remove URLs
+    text = EMAIL_REGEX.sub("", text)  # remove email addresses
+    text = " ".join(WORD_REGEX.findall(text))  # only keep words
+    return text
+
+
 def count_words(text: str) -> int:
     """Count the number of words in the text.
 
@@ -88,7 +112,16 @@ def count_words(text: str) -> int:
     int
         The number of words
     """
-    return len(re.findall(r"\b[^\d\W]+\b", text))
+    return len(clean_text(text).split())
+
+
+@lru_cache(maxsize=1)
+def _get_language_identifier() -> LanguageIdentifier:
+    # Make sure that the probabilities are normalized
+    # https://github.com/saffsd/langid.py#probability-normalization
+    language_identifier = LanguageIdentifier.from_modelstring(model, norm_probs=True)
+    language_identifier.set_languages(LANGUAGES)
+    return language_identifier
 
 
 def predict_language(text: str) -> Optional[str]:
@@ -104,14 +137,9 @@ def predict_language(text: str) -> Optional[str]:
     Optional[str]
         The predicted language
     """
-    try:
-        detected_language: str = langdetect.detect(text)
-    except LangDetectException:
-        return None
-
-    if detected_language in {"nl", "af"}:
-        return "nl"
-    elif detected_language in {"fr", "de", "en"}:
-        return detected_language
+    language: str
+    language, probability = _get_language_identifier().classify(clean_text(text))
+    if probability > MIN_LANGUAGE_PROBABILITY:
+        return language
     else:
         return None

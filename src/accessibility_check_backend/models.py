@@ -35,10 +35,13 @@ class ReturnedInfraction(BaseModel):
 
     # WCAG 3.1.1 and 3.1.2
     html_language: Optional[str] = Field(
-        None, example="en-US", title="The language as defined by the web page"
+        None, example="en", title="The language as defined by the web page"
     )
     predicted_language: Optional[str] = Field(
         None, example="nl", title="The language of the web page we predict"
+    )
+    text: Optional[str] = Field(
+        None, example="this is an example text", title="The text found to be in the wrong language"
     )
 
 
