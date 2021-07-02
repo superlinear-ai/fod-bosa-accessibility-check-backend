@@ -6,11 +6,17 @@ The frontend for this tool can be found [here](https://github.com/radix-ai/Acces
 
 We have created a list of improvements [here](docs/future_improvements.md).
 
-Developed by [Radix](https://www.radix.ai).
+## Installation
+
+To install this package in your environment, run:
+
+```bash
+pip install git+ssh://git@gitlab.com/radix-ai/fod-bosa/accessibility-check-backend.git@v0.2.0
+```
 
 ## Deployment
 
-It's very easy to deploy this API anywhere using [Docker](https://www.docker.com/get-started). Make sure you have Docker running.
+It's easy to deploy this API anywhere using [Docker](https://www.docker.com/get-started). Make sure you have Docker running.
 
 1. First, we need to build the image:
 
@@ -19,6 +25,7 @@ It's very easy to deploy this API anywhere using [Docker](https://www.docker.com
     ```
 
     Note: we use [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements) to build our image.
+    Note: in case the Docker build crashes, you may need to increase the amount of RAM allowed to Docker.
 
 2. To run the image locally, you can simply run the following command:
 
@@ -41,10 +48,10 @@ Instead of running the Docker image locally, you can also run it on a server. Th
 <details>
 <summary>Once per machine</summary>
 
-1. [Generate an SSH key for GitHub and add it to your authentication agent](https://docs.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). Then, [add the newly created SSH key to GitHub](https://docs.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account).
+1. [Generate an SSH key](https://docs.gitlab.com/ee/ssh/README.html#generating-a-new-ssh-key-pair) for GitLab, [add the SSH key to GitLab](https://docs.gitlab.com/ee/ssh/README.html#adding-an-ssh-key-to-your-gitlab-account), and [add the SSH key to your authentication agent](https://docs.gitlab.com/ee/ssh/README.html#working-with-non-default-ssh-key-pair-paths).
 2. Install [Docker](https://www.docker.com/get-started).
-3. Install [VS Code](https://code.visualstudio.com/) (optional).
-4. Install [VS Code's Remote-Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (optional).
+3. Install [VS Code](https://code.visualstudio.com/).
+4. Install [VS Code's Remote-Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 5. Install [Fira Code](https://github.com/tonsky/FiraCode/wiki/VS-Code-Instructions) (optional).
 
 </details>
@@ -55,7 +62,7 @@ Instead of running the Docker image locally, you can also run it on a server. Th
 You can set up your development environment as a self-contained [development container](https://code.visualstudio.com/docs/remote/containers) with a single step. In VS Code, press <kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>P</kbd>, select _Remote-Containers: Clone Repository in Container Volume..._ and enter:
 
 ```
-github.com:radix-ai/fod-bosa-accessibility-check-backend.git
+git@gitlab.com:radix-ai/fod-bosa/accessibility-check-backend.git
 ```
 
 Alternatively, if you prefer to install your environment locally, run `./tasks/init.sh` from VS Code's Terminal.
@@ -70,16 +77,16 @@ Alternatively, if you prefer to install your environment locally, run `./tasks/i
 2. Open a Integrated Terminal with <kbd>⌃</kbd> + <kbd>~</kbd> and you should see that the conda environment `accessibility-check-backend-env` is active.
 3. Now you're ready to run any of tasks listed by `invoke --list`.
 
-Note: if you're not using VS Code, running `conda activate accessibility-check-backend-env` will also work.
-
 </details>
 
 <details>
-<summary>Serving the API locally</summary>
+<summary>Running and debugging tests</summary>
 
 1. Activate the Python environment.
-2. Run the API locally by `invoke serve`
-3. The API will be served on http://127.0.0.1:8000. Opening this link in a browser will show you the handy docs.
+2. If you don't see _⚡ Run tests_ in the blue bar, run <kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>P</kbd> > _Python: Discover Tests_. Optionally debug the output in _View_ > _Output_ > _Python Test Log_ in case this step fails.
+3. Go to any test function in `src/tests/pytest`.
+4. Optional: put a breakpoint 🔴 next to the line number where you want to stop.
+5. Click on _Run Test_ or _Debug Test_ above the test you want to debug.
 
 </details>
 
@@ -87,14 +94,19 @@ Note: if you're not using VS Code, running `conda activate accessibility-check-b
 <summary>Releasing a new version</summary>
 
 1. Activate the Python environment.
-2. Commit any (un)staged changes on your branch.
+2. Commit any (un)staged changes on your branch and make sure to test them with `invoke test`.
 3. Run `invoke bump --part=[major|minor|patch|post]` to (a) update the version number, (b) commit the changes, and (c) tag the commit with a version identifier.
-4. Your tags will be pushed to the remote next time you `git push` (because `push.followTags` is set to true in `.git/config`). Or push the tag manually with `git push origin v0.1.0`.
-5. You can now `pip install git+https://github.com/radix-ai/fod-bosa-accessibility-check-backend.git@v0.1.0`.
+4. Your tags will be pushed to the remote next time you `git push` (because `push.followTags` is set to true in `.git/config`). Or push the tag manually with `git push origin v0.2.0`.
+5. You can now `pip install git+ssh://git@gitlab.com/radix-ai/fod-bosa/accessibility-check-backend.git@v0.2.0`.
 
 </details>
 
-## Contributors
+<details>
+<summary>Updating the Cookiecutter scaffolding</summary>
 
-- [Giel Dops](https://github.com/gield)
-- [Jérôme Renaux](https://github.com/Jerenaux)
+1. Activate the Python environment.
+2. Run `cruft check` to check for updates.
+3. Run `cruft update` to update to the latest scaffolding.
+4. Address failed merges in any `.rej` files.
+
+</details>

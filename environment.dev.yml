@@ -4,14 +4,17 @@ channels:
   - defaults
   - conda-forge
 dependencies:
+  - python~=3.8.6
   - bump2version
   - coloredlogs
   - conda-merge
   - cruft
+  - docutils
   - fastapi
   - hvplot
   - invoke
   - ipywidgets
+  - jupyterlab
   - mamba
   - matplotlib
   - moto

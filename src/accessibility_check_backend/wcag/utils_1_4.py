@@ -1,9 +1,9 @@
-"""Handy functions."""
+"""Handy functions used by WCAG 1.4.3 and 1.4.11."""
 
 import time
 from collections import Counter
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import cv2
 import numpy as np
@@ -72,17 +72,42 @@ def calculate_contrast_ratio(color1: RGBColor, color2: RGBColor) -> float:
     return (relative_luminance(light) + 0.05) / (relative_luminance(dark) + 0.05)
 
 
-def most_common_colors(a: Image) -> List[RGBColor]:
+def most_common_colors(img: Image) -> List[Optional[RGBColor]]:
     """Identify the two most common colors in part of an image."""
-    a = a.reshape(
-        a.shape[0] * a.shape[1], 3
-    )  # Flatten the image into one big list of [R,G,B] arrays
-    a = [tuple(v) for v in a]  # Convert them to tuples so they are hashable
-    c = Counter(a)  # type: ignore
+    # Commented out temporarily because of a bug
+
+    # """Identify the two most common colors in part of an image."""
+
+    # def _condense_colors(a: Image) -> np.ndarray:
+    #     r, g, b = map(np.transpose, a.T)
+    #     return r * 65536 + g * 256 + b
+
+    # def _uncondense_color(a: np.ndarray) -> np.ndarray:
+    #     r, remainder = np.divmod(a, 65536)
+    #     return np.array((r,) + np.divmod(remainder, 256))
+
+    # single_channel = _condense_colors(a)
+    # c = Counter(single_channel.flatten())  # type: ignore
+    # colors = [v[0] for v in c.most_common(2)]  # Pick two most common
+    # if len(colors) <= 1:  # Handle edge case where there is only one color
+    #     colors += [None] * (2 - len(colors))
+    # return [_uncondense_color(c) for c in colors]
+    # return [_uncondense_color(c) if c is not None else c for c in colors]
+
+    # Flatten the image into one big list of [R,G,B] arrays
+    flattened_img = img.reshape(img.shape[0] * img.shape[1], 3)
+
+    # Convert them to tuples so they are hashable
+    flattened_img_tuples = [tuple(v) for v in flattened_img]
+
+    # Pick the two most common colors
+    c = Counter(flattened_img_tuples)
     colors = [v[0] for v in c.most_common(2)]  # Pick two most common
-    if len(colors) < 2:  # Handle edge case where there is only one color
-        colors += [None] * (2 - len(colors))
-    return colors
+
+    # Handle edge case where there is only one color
+    while len(colors) < 2:
+        colors.append(None)  # type: ignore
+    return colors  # type: ignore
 
 
 def get_contrast_ratio(img: Image, x1: int, x2: int, y1: int, y2: int) -> float:
@@ -115,7 +140,7 @@ def get_contrast_ratio(img: Image, x1: int, x2: int, y1: int, y2: int) -> float:
     most_common_color, second_most_common_color = most_common_colors(word)
 
     # Get the contrast ratio between these colors
-    if second_most_common_color is not None:
+    if most_common_color is not None and second_most_common_color is not None:
         contrast_1 = calculate_contrast_ratio(most_common_color, second_most_common_color)
     else:
         contrast_1 = -1
@@ -123,7 +148,7 @@ def get_contrast_ratio(img: Image, x1: int, x2: int, y1: int, y2: int) -> float:
     # Get the average color of the pixels right above and below the bounding box
     color_above = top_border.mean(axis=0).mean(axis=0)
     color_below = bottom_border.mean(axis=0).mean(axis=0)
-    border_color = np.vstack([color_above, color_below]).mean(axis=0)
+    border_color: RGBColor = np.vstack([color_above, color_below]).mean(axis=0)
 
     # Calculate the contrast between the border and the two most frequent colors
     if most_common_color is not None:

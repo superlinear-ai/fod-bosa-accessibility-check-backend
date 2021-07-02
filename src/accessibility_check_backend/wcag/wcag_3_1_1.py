@@ -5,13 +5,15 @@ from typing import List
 
 from lxml.html import HtmlElement
 
-from .type_aliases import Infraction
+from ..models import LanguageInfraction
 from .utils_3_1 import count_words, predict_language
 
 MIN_WORDS_DEFAULT = 5
 
 
-def detect_wcag_3_1_1_infractions(body_html: HtmlElement, html_language: str) -> List[Infraction]:
+def detect_wcag_3_1_1_infractions(
+    body_html: HtmlElement, html_language: str
+) -> List[LanguageInfraction]:
     """Detect WCAG 3.1.1 infractions in the given web page.
 
     Parameters
@@ -23,7 +25,7 @@ def detect_wcag_3_1_1_infractions(body_html: HtmlElement, html_language: str) ->
 
     Returns
     -------
-    List[Infraction]
+    List[LanguageInfraction]
         The detected infractions against WCAG 3.1.1
     """
     # Get the page's contents
@@ -35,17 +37,18 @@ def detect_wcag_3_1_1_infractions(body_html: HtmlElement, html_language: str) ->
     predicted_language = predict_language(root_text)
 
     # Check whether the page's defined language is the same as its predicted language
+    infractions = []
     if predicted_language and predicted_language != html_language:
-        return [
-            {
-                "wcag_criterion": "WCAG_3_1_1",
-                "xpath": "/html",
-                "html_language": html_language,
-                "predicted_language": predicted_language,
-            }
-        ]
-    else:
-        return []
+        infractions.append(
+            LanguageInfraction(
+                wcag_criterion="WCAG_3_1_1",
+                xpath="/html",
+                html_language=html_language,
+                predicted_language=predicted_language,
+                text=root_text,
+            )
+        )
+    return infractions
 
 
 def _get_root_text(body_html: HtmlElement) -> str:
@@ -74,6 +77,8 @@ def _get_root_text(body_html: HtmlElement) -> str:
         if element.get("lang", None):
             continue  # This element and its children are ignored as it has a `lang` attribute
         stack.extend(element.getchildren())
-        if element.text and (text := element.text.strip()):
+        if element.text:
+            text = element.text.strip()
+        if element.text and text:
             text_parts.append(text)
     return " ".join(text_parts)

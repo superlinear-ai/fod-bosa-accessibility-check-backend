@@ -3,6 +3,8 @@ name: accessibility-check-backend-run-env
 channels:
   - defaults
   - conda-forge
+  - huggingface
+  - anaconda
 dependencies:
   - python~=3.8.6
   - pip~=20.2
@@ -16,3 +18,4 @@ dependencies:
       - python-multipart
       - selenium
       - uvicorn[standard]
+      - sentence-transformers

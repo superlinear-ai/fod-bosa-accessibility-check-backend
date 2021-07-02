@@ -2,10 +2,11 @@
 
 from typing import List
 
-from .type_aliases import Infraction
+from ..models import Infraction
 from .utils import render_url
 from .utils_1_4 import take_screenshot
 from .utils_3_1 import get_html_language, parse_page
+from .wcag_1_1_1 import detect_wcag_1_1_1_infractions
 from .wcag_1_4_3 import detect_wcag_1_4_3_infractions
 from .wcag_1_4_11 import detect_wcag_1_4_11_infractions
 from .wcag_3_1_1 import detect_wcag_3_1_1_infractions
@@ -29,7 +30,7 @@ def detect_wcag_infractions(url: str, window_width: int, window_height: int) -> 
     List[Infraction]
         The detected infractions against WCAG
     """
-    infractions = []
+    infractions: List[Infraction] = []
 
     # Preparations
     driver_small = render_url(url, window_width, window_height, scale=1)
@@ -40,13 +41,16 @@ def detect_wcag_infractions(url: str, window_width: int, window_height: int) -> 
     html_language = get_html_language(driver_small)
 
     # Detect infractions against WCAG 1.4.3 and 1.4.11
-    infractions = detect_wcag_1_4_3_infractions(driver_small, img_small, img_large)
+    infractions += detect_wcag_1_4_3_infractions(driver_small, img_small, img_large)
     infractions += detect_wcag_1_4_11_infractions(driver_large, img_large)
 
-    # Detect infractions against WCAG 3.1.1 and 3.1.2
+    # # Detect infractions against WCAG 3.1.1 and 3.1.2
     if html_language:
         infractions += detect_wcag_3_1_1_infractions(body_html, html_language)
         infractions += detect_wcag_3_1_2_infractions(body_html, html_language)
+
+    # Detect infractions against WCAG 3.1.1 and 3.1.2
+    infractions += detect_wcag_1_1_1_infractions(driver_large)
 
     # Clean up
     driver_small.quit()

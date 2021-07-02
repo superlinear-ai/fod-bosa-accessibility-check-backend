@@ -21,7 +21,7 @@ with open(os.path.join(os.path.dirname(__file__), "environment.run.yml")) as spe
 
 setup(
     name="accessibility_check_backend",
-    version="0.1.0",
+    version="0.2.0",
     description="Extra checks for FOD BOSA's Accessibility Check tool.",
     package_dir={"": "src"},
     packages=find_packages(where="src"),

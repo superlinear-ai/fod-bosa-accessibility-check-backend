@@ -5,13 +5,14 @@ from typing import List, Optional
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from .type_aliases import Image, Infraction
+from ..models import ContrastInfraction
+from .type_aliases import Image
 from .utils_1_4 import get_contrast_ratio, get_xpath_of_element
 
 MIN_CONTRAST_RATIO = 3.0
 
 
-def detect_wcag_1_4_11_infractions(driver: WebDriver, img: Image) -> List[Infraction]:
+def detect_wcag_1_4_11_infractions(driver: WebDriver, img: Image) -> List[ContrastInfraction]:
     """Detect WCAG 1.4.11 infractions in the given web page.
 
     Parameters
@@ -23,7 +24,7 @@ def detect_wcag_1_4_11_infractions(driver: WebDriver, img: Image) -> List[Infrac
 
     Returns
     -------
-    List[Infraction]
+    List[ContrastInfraction]
         The detected infractions against WCAG 1.4.11
     """
     input_elements = find_input_elements(driver)
@@ -31,13 +32,14 @@ def detect_wcag_1_4_11_infractions(driver: WebDriver, img: Image) -> List[Infrac
     for element in input_elements:
         contrast_ratio = get_input_element_contrast_ratio(element, img)
         if contrast_ratio is not None and contrast_ratio < MIN_CONTRAST_RATIO:
-            infraction: Infraction = {
-                "wcag_criterion": "WCAG_1_4_11",
-                "xpath": get_xpath_of_element(element),
-                "contrast": contrast_ratio,
-                "contrast_threshold": MIN_CONTRAST_RATIO,
-            }
-            infractions.append(infraction)
+            infractions.append(
+                ContrastInfraction(
+                    wcag_criterion="WCAG_1_4_11",
+                    xpath=get_xpath_of_element(element),
+                    contrast=contrast_ratio,
+                    contrast_threshold=MIN_CONTRAST_RATIO,
+                )
+            )
     return infractions
 
 

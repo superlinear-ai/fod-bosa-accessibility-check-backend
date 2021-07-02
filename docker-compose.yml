@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  # DOCKER_BUILDKIT=1 docker build --ssh default --target ci-image --tag accessibility-check-backend-ci .
+  ci:
+    image: registry.gitlab.com/radix-ai/fod-bosa/accessibility-check-backend/ci:latest
+    build:
+      context: .
+      target: ci-image
+
+  # DOCKER_BUILDKIT=1 docker build --ssh default --target app-image --tag accessibility-check-backend-app .
+  app:
+    image: registry.gitlab.com/radix-ai/fod-bosa/accessibility-check-backend:latest
+    build:
+      context: .
+      target: app-image
+    command: ["dev"]
+    ports:
+      - 8000:8000
+    volumes:
+      - ./src/accessibility-check-backend/:/app/src/accessibility-check-backend/

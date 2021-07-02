@@ -11,7 +11,8 @@ from imutils.object_detection import non_max_suppression
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from .type_aliases import Image, Infraction
+from ..models import ContrastInfraction
+from .type_aliases import Image
 from .utils_1_4 import get_contrast_ratio, get_xpath_of_element
 
 MIN_CONTRAST_RATIO = 4.5
@@ -36,7 +37,7 @@ class BoundingBox:
 
 def detect_wcag_1_4_3_infractions(
     driver: WebDriver, img_small: Image, img_large: Image
-) -> List[Infraction]:
+) -> List[ContrastInfraction]:
     """Detect WCAG 1.4.3 infractions in the given web page.
 
     Parameters
@@ -50,7 +51,7 @@ def detect_wcag_1_4_3_infractions(
 
     Returns
     -------
-    List[Infraction]
+    List[ContrastInfraction]
         The detected infractions against WCAG 1.4.3
     """
     new_width, new_height = get_new_size(img_small)
@@ -80,7 +81,7 @@ def detect_wcag_1_4_3_infractions(
         low_boxes = sorted(low_boxes, key=lambda b: [b.y1, b.x1])
     low_boxes = concatenate_words_horizontally(low_boxes)
 
-    infractions_dict: Dict[str, Infraction] = {}
+    infractions_dict: Dict[str, ContrastInfraction] = {}
     for box in low_boxes:
         dom_element = get_dom_element(box, driver)
         if not dom_element:
@@ -88,17 +89,16 @@ def detect_wcag_1_4_3_infractions(
 
         xpath = get_xpath_of_element(dom_element)
         if xpath in infractions_dict:
-            contrast_already_in_dict: float = infractions_dict[xpath]["contrast"]  # type: ignore
+            contrast_already_in_dict: float = infractions_dict[xpath].contrast  # type: ignore
             if box.contrast > contrast_already_in_dict:
                 continue  # Continue if the xpath is already in the dict with a lower contrast
 
-        infraction: Infraction = {
-            "wcag_criterion": "WCAG_1_4_3",
-            "xpath": xpath,
-            "contrast": box.contrast,
-            "contrast_threshold": box.contrast_threshold,
-        }
-        infractions_dict[xpath] = infraction
+        infractions_dict[xpath] = ContrastInfraction(
+            wcag_criterion="WCAG_1_4_3",
+            xpath=xpath,
+            contrast=box.contrast,
+            contrast_threshold=box.contrast_threshold,
+        )
 
     return list(infractions_dict.values())
 

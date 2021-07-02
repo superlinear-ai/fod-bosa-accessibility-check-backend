@@ -1,9 +1,17 @@
 # syntax=docker/dockerfile:experimental
-ARG BASE_IMAGE=continuumio/miniconda3:4.8.2
+ARG BASE_IMAGE=continuumio/miniconda3:4.9.2
 
 # # 1. Create COMPILE image
 
 FROM $BASE_IMAGE AS compile-image
+
+# Allow cloning private repositories.
+ARG GITLAB_CI_TOKEN
+RUN if [ -n "$GITLAB_CI_TOKEN" ]; then \
+    git config --global url."https://gitlab-ci-token:$GITLAB_CI_TOKEN@gitlab.com/".insteadOf "ssh://git@gitlab.com/"; \
+    else \
+    mkdir -p -m 0600 ~/.ssh && ssh-keyscan gitlab.com >> ~/.ssh/known_hosts; \
+    fi
 
 # Install compilers for certain pip requirements.
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
@@ -28,7 +36,23 @@ RUN --mount=type=ssh pip install conda-merge && \
     find /opt/conda/ -follow -type f -name '*.pyo' -delete && \
     cd /opt/conda/envs/accessibility-check-backend-run-env/lib/python*/site-packages && du --max-depth=3 --threshold=5M -h | sort -h && cd -
 
-# # 2. Create application image
+# # 2. Create CI image
+
+FROM $BASE_IMAGE AS ci-image
+
+# Configure Python.
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+# Copy the conda environment from the compile-image.
+COPY --from=compile-image /root/.conda/ /root/.conda/
+COPY --from=compile-image /opt/conda/ /opt/conda/
+
+# Activate conda environment.
+ENV PATH /opt/conda/envs/accessibility-check-backend-env/bin:$PATH
+RUN echo "source activate accessibility-check-backend-env" >> ~/.bashrc
+
+# # 3. Create application image
 
 FROM $BASE_IMAGE AS app-image
 
@@ -54,7 +78,7 @@ RUN printf '#!/usr/bin/env bash\n\
     \n\
     function run_serve {\n\
     echo "Running Production Server on 0.0.0.0:8000"\n\
-    gunicorn --bind 0.0.0.0 --workers=2 --timeout 120 --graceful-timeout 120 --keep-alive 10 --worker-tmp-dir /dev/shm --access-logfile - --log-file - -k uvicorn.workers.UvicornWorker "accessibility_check_backend.api:app"\n\
+    gunicorn --bind 0.0.0.0 --workers=2 --timeout 1200 --graceful-timeout 1200 --keep-alive 10 --worker-tmp-dir /dev/shm --access-logfile - --log-file - -k uvicorn.workers.UvicornWorker "accessibility_check_backend.api:app"\n\
     }\n\
     \n\
     case "$1" in\n\

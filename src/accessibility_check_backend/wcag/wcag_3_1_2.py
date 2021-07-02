@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 from lxml.etree import _ElementTree
 from lxml.html import HtmlElement
 
-from .type_aliases import Infraction
+from ..models import LanguageInfraction
 from .utils_3_1 import count_words, predict_language
 
 MIN_WORDS_DEFAULT = 4
@@ -13,7 +13,9 @@ MIN_WORDS_HIDDEN = 2
 HIDDEN_ATTRIBUTES = {"aria-label", "alt", "value", "title"}
 
 
-def detect_wcag_3_1_2_infractions(body_html: HtmlElement, html_language: str) -> List[Infraction]:
+def detect_wcag_3_1_2_infractions(
+    body_html: HtmlElement, html_language: str
+) -> List[LanguageInfraction]:
     """Detect WCAG 3.1.2 infractions in the given web page.
 
     Parameters
@@ -25,7 +27,7 @@ def detect_wcag_3_1_2_infractions(body_html: HtmlElement, html_language: str) ->
 
     Returns
     -------
-    List[Infraction]
+    List[LanguageInfraction]
         The detected infractions against WCAG 3.1.2
     """
     # Obtain the infractions recursively
@@ -36,8 +38,11 @@ def detect_wcag_3_1_2_infractions(body_html: HtmlElement, html_language: str) ->
 
 
 def _dfs(
-    tree: _ElementTree, element: HtmlElement, parent_language: str, infractions: List[Infraction]
-) -> Tuple[str, Optional[str], Optional[str], List[Infraction]]:
+    tree: _ElementTree,
+    element: HtmlElement,
+    parent_language: str,
+    infractions: List[LanguageInfraction],
+) -> Tuple[str, Optional[str], Optional[str], List[LanguageInfraction]]:
     """Check for infractions against WCAG 3.1.2 using a recursive DFS.
 
     Parameters
@@ -48,12 +53,12 @@ def _dfs(
         The current element to check for infractions
     parent_language : str
         The defined language of the current element's parent
-    infractions : List[Infraction]
+    infractions : List[LanguageInfraction]
         The infractions found until now
 
     Returns
     -------
-    Tuple[str, Optional[str], Optional[str], List[Infraction]]
+    Tuple[str, Optional[str], Optional[str], List[LanguageInfraction]]
         A tuple containing:
           - the explicitly defined language of the current element
           - the detected language of the current element
@@ -80,18 +85,19 @@ def _dfs(
         # Differ between children that are similar and children that are different
         if len({(defined, detected) for defined, detected, _, _ in children_results}) == 1:
             # All children have the same language defined and detected
-            child_defined_language, child_detected_language, child_text, _ = children_results[0]
+            child_defined_language, child_detected_language, _, _ = children_results[0]
+            children_text = " ".join(str(child_result[2]) for child_result in children_results)
             if child_detected_language and child_defined_language != child_detected_language:
                 # All children are wrong
                 # Give a warning for the current element instead of for each of its children
                 infractions.append(
-                    {
-                        "wcag_criterion": "WCAG_3_1_2",
-                        "xpath": tree.getpath(element),
-                        "html_language": child_defined_language,
-                        "predicted_language": child_detected_language,
-                        "text": child_text,
-                    }
+                    LanguageInfraction(
+                        wcag_criterion="WCAG_3_1_2",
+                        xpath=tree.getpath(element),
+                        html_language=child_defined_language,
+                        predicted_language=child_detected_language,
+                        text=children_text,
+                    )
                 )
         else:
             # The children have different values for their defined and detected languages
@@ -100,13 +106,13 @@ def _dfs(
                 if child_detected_language and child_detected_language != child_defined_language:
                     # This child is wrong, give a warning for only this child
                     infractions.append(
-                        {
-                            "wcag_criterion": "WCAG_3_1_2",
-                            "xpath": tree.getpath(child),
-                            "html_language": child_defined_language,
-                            "predicted_language": child_detected_language,
-                            "text": child_text,
-                        }
+                        LanguageInfraction(
+                            wcag_criterion="WCAG_3_1_2",
+                            xpath=tree.getpath(child),
+                            html_language=child_defined_language,
+                            predicted_language=child_detected_language,
+                            text=str(child_text),
+                        )
                     )
 
         # If any of the children of the current element contains a very short piece of text, add it
@@ -136,7 +142,7 @@ def _dfs(
 
 def _check_hidden_attributes(
     tree: _ElementTree, element: HtmlElement, defined_language: str
-) -> Optional[Infraction]:
+) -> Optional[LanguageInfraction]:
     """Check for an infraction in the hidden attributes of an element.
 
     Parameters
@@ -150,7 +156,7 @@ def _check_hidden_attributes(
 
     Returns
     -------
-    Optional[Infraction]
+    Optional[LanguageInfraction]
         Either an infraction against WCAG 3.1.2 or `None`
     """
     for attribute_name in HIDDEN_ATTRIBUTES:
@@ -162,11 +168,11 @@ def _check_hidden_attributes(
             detected_language = predict_language(attribute_value)
             if detected_language and defined_language != detected_language:
                 # The hidden attribute is wrong, return an infraction
-                return {
-                    "wcag_criterion": "WCAG_3_1_2",
-                    "xpath": tree.getpath(element),
-                    "html_language": defined_language,
-                    "predicted_language": detected_language,
-                    "text": attribute_value,
-                }
+                return LanguageInfraction(
+                    wcag_criterion="WCAG_3_1_2",
+                    xpath=tree.getpath(element),
+                    html_language=defined_language,
+                    predicted_language=detected_language,
+                    text=attribute_value,
+                )
     return None

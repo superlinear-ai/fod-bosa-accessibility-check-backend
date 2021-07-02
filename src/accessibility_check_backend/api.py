@@ -46,4 +46,4 @@ async def check_url(data: CheckURLData) -> ReturnedInfractions:
         The errors detected in the given URL
     """
     infractions = detect_wcag_infractions(data.url, data.window_width, data.window_height)
-    return ReturnedInfractions.create(infractions)
+    return ReturnedInfractions(errors=infractions)
