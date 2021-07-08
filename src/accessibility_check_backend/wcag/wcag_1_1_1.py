@@ -1,6 +1,8 @@
 """Detect infractions against WCAG 1.1.1."""
+from io import BytesIO
 from typing import List
 
+import cairosvg
 import requests
 from PIL import Image
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -29,14 +31,25 @@ def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
     model = SentenceTransformer("clip-ViT-B-32")
     infractions = []
 
+    ERROR_THRESHOLD = 0.18
+    WARNING_THRESHOLD = 0.23
+
     for el in driver.find_elements(By.TAG_NAME, "img"):
         if not el.get_attribute("alt"):
             continue
 
+        src = el.get_attribute("src")
+        ext = src[-3:]
+
         try:
-            image = Image.open(requests.get(el.get_attribute("src"), stream=True).raw)
+            if ext == "svg":
+                out = BytesIO()
+                cairosvg.svg2png(url=src, write_to=out)
+                image = Image.open(out)
+            else:
+                image = Image.open(requests.get(src, stream=True).raw)
         except Exception as e:
-            print(f"Exception: {e}")
+            print(f"Exception: {e} for url {src}")
             continue
 
         img_emb = model.encode(image)  # Embed image
@@ -47,11 +60,11 @@ def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
             img_emb, text_emb
         ).item()  # Compute cosine between image and text embeddings
 
-        # print(f"{orig_text}, {text}, {cosine_score}")
+        print(f"{orig_text}, {text}, {cosine_score}")
 
-        type = 1 if cosine_score < 0.18 else 2
+        type = 1 if cosine_score < ERROR_THRESHOLD else 2
 
-        if cosine_score < 0.21:
+        if cosine_score < WARNING_THRESHOLD:
             infractions.append(
                 AltTextInfraction(
                     wcag_criterion="WCAG_1_1_1",

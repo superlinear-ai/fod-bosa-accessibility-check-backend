@@ -25,6 +25,7 @@ It's easy to deploy this API anywhere using [Docker](https://www.docker.com/get-
     ```
 
     Note: we use [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements) to build our image.
+    
     Note: in case the Docker build crashes, you may need to increase the amount of RAM allowed to Docker.
 
 2. To run the image locally, you can simply run the following command:

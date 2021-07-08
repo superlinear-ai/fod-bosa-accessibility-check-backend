@@ -14,7 +14,7 @@ RUN if [ -n "$GITLAB_CI_TOKEN" ]; then \
     fi
 
 # Install compilers for certain pip requirements.
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential libcairo2 && rm -rf /var/lib/apt/lists/*
 
 # Install conda environments. Minification inspired by [1].
 # [1] https://jcrist.github.io/conda-docker-tips.html

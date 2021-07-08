@@ -19,3 +19,4 @@ dependencies:
       - selenium
       - uvicorn[standard]
       - sentence-transformers
+      - cairosvg
