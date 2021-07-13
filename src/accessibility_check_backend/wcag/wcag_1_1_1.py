@@ -31,8 +31,8 @@ def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
     model = SentenceTransformer("clip-ViT-B-32")
     infractions = []
 
-    ERROR_THRESHOLD = 0.18
-    WARNING_THRESHOLD = 0.23
+    ERROR_THRESHOLD = 0.25
+    WARNING_THRESHOLD = 0.27
 
     for el in driver.find_elements(By.TAG_NAME, "img"):
         if not el.get_attribute("alt"):
