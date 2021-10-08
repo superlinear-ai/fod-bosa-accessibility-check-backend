@@ -8,6 +8,7 @@ from .utils_1_4 import take_screenshot
 from .utils_3_1 import get_html_language, parse_page
 from .wcag_1_1_1 import detect_wcag_1_1_1_infractions
 from .wcag_1_4_3 import detect_wcag_1_4_3_infractions
+from .wcag_1_4_5 import detect_wcag_1_4_5_infractions
 from .wcag_1_4_11 import detect_wcag_1_4_11_infractions
 from .wcag_3_1_1 import detect_wcag_3_1_1_infractions
 from .wcag_3_1_2 import detect_wcag_3_1_2_infractions
@@ -49,8 +50,15 @@ def detect_wcag_infractions(url: str, window_width: int, window_height: int) -> 
         infractions += detect_wcag_3_1_1_infractions(body_html, html_language)
         infractions += detect_wcag_3_1_2_infractions(body_html, html_language)
 
-    # Detect infractions against WCAG 3.1.1 and 3.1.2
+    # Detect infractions against WCAG 1.1.1
     infractions += detect_wcag_1_1_1_infractions(driver_large)
+
+    infractions_1_4_5 = detect_wcag_1_4_5_infractions(driver_large)
+    xpaths = [infraction.xpath for infraction in infractions_1_4_5]
+
+    infractions = [infraction for infraction in infractions if infraction.xpath not in xpaths]
+
+    infractions += infractions_1_4_5
 
     # Clean up
     driver_small.quit()

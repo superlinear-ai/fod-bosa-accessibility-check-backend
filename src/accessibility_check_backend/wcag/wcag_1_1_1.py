@@ -16,6 +16,7 @@ from .utils_1_4 import get_xpath_of_element
 
 def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
     """Detect WCAG 1.1.1 infractions in the given web page.
+    More specifically, detect images which do not seem to match their alt text.
 
     Parameters
     ----------
@@ -39,6 +40,7 @@ def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
             continue
 
         src = el.get_attribute("src")
+        print("####", src)
         ext = src[-3:]
 
         try:
@@ -47,31 +49,37 @@ def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
                 cairosvg.svg2png(url=src, write_to=out)
                 image = Image.open(out)
             else:
-                image = Image.open(requests.get(src, stream=True).raw)
+                image = Image.open(requests.get(src, stream=True).raw).convert("RGB")
         except Exception as e:
             print(f"Exception: {e} for url {src}")
             continue
 
-        img_emb = model.encode(image)  # Embed image
-        orig_text = el.get_attribute("alt")
-        text = translate(orig_text)
-        text_emb = model.encode(text)  # Embed text
-        cosine_score = util.pytorch_cos_sim(
-            img_emb, text_emb
-        ).item()  # Compute cosine between image and text embeddings
+        print(image)
 
-        print(f"{orig_text}, {text}, {cosine_score}")
+        try:
+            img_emb = model.encode(image)  # Embed image
+        except Exception as e:
+            continue
 
-        type = 1 if cosine_score < ERROR_THRESHOLD else 2
+        # orig_text = el.get_attribute("alt")
+        # text = translate(orig_text)
+        # text_emb = model.encode(text)  # Embed text
+        # cosine_score = util.pytorch_cos_sim(
+        #     img_emb, text_emb
+        # ).item()  # Compute cosine between image and text embeddings
 
-        if cosine_score < WARNING_THRESHOLD:
-            infractions.append(
-                AltTextInfraction(
-                    wcag_criterion="WCAG_1_1_1",
-                    xpath=get_xpath_of_element(el),
-                    text=el.get_attribute("alt"),
-                    type=type,
-                )
-            )
+        # print(f"{orig_text}, {text}, {cosine_score}")
+
+        # # type = 1 if cosine_score < ERROR_THRESHOLD else 2
+
+        # if cosine_score < WARNING_THRESHOLD:
+        #     infractions.append(
+        #         AltTextInfraction(
+        #             wcag_criterion="WCAG_1_1_1",
+        #             xpath=get_xpath_of_element(el),
+        #             text=el.get_attribute("alt"),
+        #             type=2,  # 1 = error, 2 = warning ; we decided that all 1.1.1 errors should be warnings
+        #         )
+        #     )
 
     return infractions

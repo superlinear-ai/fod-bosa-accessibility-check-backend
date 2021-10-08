@@ -14,7 +14,7 @@ RUN if [ -n "$GITLAB_CI_TOKEN" ]; then \
     fi
 
 # Install compilers for certain pip requirements.
-RUN apt-get update && apt-get install -y build-essential libcairo2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get --allow-releaseinfo-change update && apt-get install -y apt-transport-https build-essential libcairo2 && rm -rf /var/lib/apt/lists/*
 
 # Install conda environments. Minification inspired by [1].
 # [1] https://jcrist.github.io/conda-docker-tips.html
@@ -101,7 +101,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["serve"]
 
 # Install Chrome (and some dependencies)
-RUN apt-get -y update && \
+RUN apt-get --allow-releaseinfo-change update && \
     apt-get install -y unzip wget gnupg2 && \
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \

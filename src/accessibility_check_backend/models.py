@@ -9,9 +9,7 @@ class CheckURLData(BaseModel):
     """Data object containing the resources from the client page."""
 
     url: str = Field(
-        ...,
-        example="https://eid.belgium.be/fr",
-        title="The URL to be checked",
+        ..., example="https://eid.belgium.be/fr", title="The URL to be checked",
     )
     window_width: int = Field(default=1920, example=1920, title="The width of the user's window")
     window_height: int = Field(default=1080, example=1080, title="The height of the user's window")

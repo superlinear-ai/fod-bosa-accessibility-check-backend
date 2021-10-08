@@ -32,7 +32,6 @@ dependencies:
   - snakeviz
   - tqdm
   - pip:
-      - birdseye
       - black
       - flake8
       - flake8-comprehensions
