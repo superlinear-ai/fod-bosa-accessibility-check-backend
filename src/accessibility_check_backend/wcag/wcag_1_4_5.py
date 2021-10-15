@@ -58,13 +58,12 @@ def find_decorative_and_nondecoratives(driver):
 
         try:
             img = cv2.imdecode(arr, -1)
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+            surface, _ = EAST(img)
+            ratio = surface / (img.shape[0] * img.shape[1])
+            return surface and ratio > 0.7
         except:
             return False
-
-        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-        surface, _ = EAST(img)
-        ratio = surface / (img.shape[0] * img.shape[1])
-        return surface and ratio > 0.7
 
     non_img_links = [
         el.get_attribute("href")
