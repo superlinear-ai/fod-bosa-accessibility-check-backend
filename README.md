@@ -6,6 +6,8 @@ The frontend for this tool can be found [here](https://github.com/radix-ai/Acces
 
 We have created a list of improvements [here](docs/future_improvements.md).
 
+General project documentation can be found in the [docs folder](docs/).
+
 ## Installation
 
 To install this package in your environment, run:
