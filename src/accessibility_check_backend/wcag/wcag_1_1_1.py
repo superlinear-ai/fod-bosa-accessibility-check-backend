@@ -40,7 +40,6 @@ def detect_wcag_1_1_1_infractions(driver: WebDriver) -> List[AltTextInfraction]:
             continue
 
         src = el.get_attribute("src")
-        print("####", src)
         ext = src[-3:]
 
         try:

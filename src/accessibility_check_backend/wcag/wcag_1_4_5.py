@@ -267,7 +267,10 @@ def detect_wcag_1_4_5_infractions(driver: WebDriver) -> List[AltTextInfraction]:
     infractions = []
     for src in nondecorative:
         if src in have_text:
+            if alts[src] == "":
+                continue
             if not match_text(src, alts[src]):
+                # print(get_xpath_of_element(els[src]), alts[src])
                 infractions.append(
                     AltTextInfraction(
                         wcag_criterion="WCAG_1_4_5",
